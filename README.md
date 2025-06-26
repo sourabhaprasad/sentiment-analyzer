@@ -5,6 +5,8 @@ A full-stack web application that analyzes the sentiment of movie reviews using 
 - Rule-based word analysis
 - LLM-based classification via Google's Gemini API
 
+Live Demo: https://sentiment-analyzer-sooty.vercel.app
+
 ---
 
 ## Approach to Sentiment Analysis
