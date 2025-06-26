@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { fetchResultById } from "@/lib/api";
-import Link from "next/link";
 
 export default async function ResultPage({
   params,
