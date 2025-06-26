@@ -7,6 +7,35 @@ A full-stack web application that analyzes the sentiment of movie reviews using 
 
 ---
 
+## Approach to Sentiment Analysis
+
+This application supports two distinct approaches to sentiment classification:
+
+### 1. Rule-Based Sentiment Analysis
+
+- A curated list of positive, negative, and neutral words/phrases is used to assess the sentiment of the review.
+- The algorithm counts occurrences of these keywords, while also handling edge cases such as:
+  - Negations (e.g., _"not good"_ is treated as negative)
+  - Multi-word expressions (e.g., _"highly recommend"_ is treated as positive)
+  - Neutral expressions (e.g., _"okay"_, _"average"_)
+- The final sentiment (Positive, Negative, or Neutral) is determined based on the relative counts.
+- An explanation with counts and a **computed score** is returned to help interpret the result.
+
+**Example:**
+
+> **Review:** "Absolutely not great. I expected better."
+> **Sentiment:** Negative
+> **Explanation:** Rule-based: Score = -2.5 (Pos: 0, Neg: 2, Neutral: 0)
+
+### 2. LLM-Based Sentiment Analysis (via Gemini)
+
+- Reviews are passed to the Google Gemini API with a prompt instructing it to classify sentiment as **Positive**, **Negative**, or **Neutral**.
+- The model's textual response is parsed and matched to one of the three sentiment labels.
+- A short explanation (e.g., _"Gemini says: Mostly positive with uplifting words"_) is returned to provide interpretability.
+- This method supports more nuanced or complex sentence structures.
+
+---
+
 ## Features
 
 - Analyze movie reviews using either LLM or rule-based logic
@@ -37,6 +66,7 @@ A full-stack web application that analyzes the sentiment of movie reviews using 
 ## Folder Structure
 
 ```
+
 sentiment-analyzer/
 ├── backend/                 # Express.js API
 │   ├── routes/              # Modular route handlers
@@ -52,6 +82,7 @@ sentiment-analyzer/
 │
 ├── .env                     # Environment variables
 └── README.md
+
 ```
 
 ---
@@ -121,4 +152,4 @@ This structure supports quick scalability with minimal boilerplate.
 
 ---
 
-**Built by [Sourabha K H](mailto:sourabhaprasad04@gmail.com)** — for the Zero to One Internship.
+**Built by [Sourabha K H](mailto:sourabhaprasad04@gmail.com)** — for assignment submission.
