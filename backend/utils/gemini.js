@@ -16,7 +16,12 @@ export async function analyzeWithGemini(review) {
           {
             parts: [
               {
-                text: `Analyze the sentiment of this movie review in one word:\n"${review}"\n\nRespond with only one word: Positive, Negative, or Neutral.`,
+                text: `Analyze the sentiment of this movie review and respond in this format:
+
+Sentiment: [Positive|Negative|Neutral]
+Explanation: [one short sentence explaining the reasoning]
+
+Review: "${review}"`,
               },
             ],
           },
@@ -35,22 +40,19 @@ export async function analyzeWithGemini(review) {
       throw new Error("Empty response from Gemini");
     }
 
-    const lower = raw.toLowerCase();
-    let sentiment = null;
+    const sentimentMatch = raw.match(
+      /Sentiment:\s*(Positive|Negative|Neutral)/i
+    );
+    const explanationMatch = raw.match(/Explanation:\s*(.+)/i);
 
-    if (/\bpositive\b/.test(lower)) {
-      sentiment = "Positive";
-    } else if (/\bnegative\b/.test(lower)) {
-      sentiment = "Negative";
-    } else if (/\bneutral\b/.test(lower)) {
-      sentiment = "Neutral";
-    }
+    const sentiment = sentimentMatch?.[1] || null;
+    const explanation = explanationMatch?.[1] || "No explanation provided.";
 
     if (!sentiment) {
       throw new Error(`Unexpected sentiment response: "${raw}"`);
     }
 
-    return { sentiment, explanation: `Gemini says: ${raw}` };
+    return { sentiment, explanation };
   } catch (err) {
     console.error("Gemini API error:", err.message);
     return {
