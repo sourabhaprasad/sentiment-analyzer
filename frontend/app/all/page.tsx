@@ -7,9 +7,18 @@ import { Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "../components/ui/Button";
 
+interface ResultLog {
+  _id: string;
+  method: string;
+  review: string;
+  sentiment: "Positive" | "Negative" | "Neutral";
+  timestamp?: string | number | Date;
+  explanation?: string;
+}
+
 export default function LogsPage() {
   const router = useRouter();
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<ResultLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -48,9 +57,7 @@ export default function LogsPage() {
               onClick={async () => {
                 try {
                   await deleteResultById(id);
-                  setData((prev) =>
-                    prev.filter((item: any) => item._id !== id)
-                  );
+                  setData((prev) => prev.filter((item) => item._id !== id));
                   toast.dismiss(t.id);
                   toast.success("Log deleted");
                 } catch (err) {
@@ -73,20 +80,18 @@ export default function LogsPage() {
     let filtered = [...data];
 
     if (search.trim()) {
-      filtered = filtered.filter((item: any) =>
+      filtered = filtered.filter((item) =>
         item.review.toLowerCase().includes(search.toLowerCase())
       );
     }
 
     if (sentimentFilter !== "All") {
-      filtered = filtered.filter(
-        (item: any) => item.sentiment === sentimentFilter
-      );
+      filtered = filtered.filter((item) => item.sentiment === sentimentFilter);
     }
 
-    filtered.sort((a: any, b: any) => {
-      const dateA = new Date(a.timestamp).getTime();
-      const dateB = new Date(b.timestamp).getTime();
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.timestamp ?? 0).getTime();
+      const dateB = new Date(b.timestamp ?? 0).getTime();
       return sortOrder === "Newest" ? dateB - dateA : dateA - dateB;
     });
 
@@ -193,7 +198,7 @@ export default function LogsPage() {
                     </tr>
                   );
                 }
-                return filteredData.map((item: any, index: number) => (
+                return filteredData.map((item, index) => (
                   <tr
                     key={item._id}
                     className="border-b border-gray-200 hover:bg-gray-50 transition cursor-pointer group"

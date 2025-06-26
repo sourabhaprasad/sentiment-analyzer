@@ -2,17 +2,17 @@ import { notFound } from "next/navigation";
 import { fetchResultById } from "@/lib/api";
 import Link from "next/link";
 
-interface Params {
-  id: string;
-}
-
-export default async function ResultPage({ params }: { params: Params }) {
+export default async function ResultPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const { id } = params;
 
   let result;
   try {
     result = await fetchResultById(id);
-  } catch (err) {
+  } catch {
     return notFound();
   }
 

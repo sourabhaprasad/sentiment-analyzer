@@ -1,5 +1,4 @@
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function analyzeReview(review: string, method: "llm" | "rule") {
   const res = await fetch(`${BASE_URL}/analyze`, {
