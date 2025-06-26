@@ -83,47 +83,62 @@ export function runRuleBasedAnalysis(review) {
 
   const cleanedReview = review.toLowerCase().replace(/[^\w\s]/g, "");
   const words = cleanedReview.split(/\s+/);
-
-  let posCount = 0;
-  let negCount = 0;
-  let isNeutral = false;
-
-  // Handle multi-word phrases like "highly recommend" and "not bad"
   const reviewText = cleanedReview;
 
-  const checkPhrase = (phraseList) =>
-    phraseList.reduce(
-      (acc, phrase) => (reviewText.includes(phrase) ? acc + 1 : acc),
-      0
-    );
+  let score = 0;
+  let posHits = 0;
+  let negHits = 0;
+  let neutralHits = 0;
 
-  posCount += checkPhrase(["highly recommend"]);
-  negCount += checkPhrase(["not good", "not great", "not recommend"]);
-  isNeutral = reviewText.includes("not bad") || reviewText.includes("so-so");
+  // Handle multi-word phrases first
+  const multiWordChecks = [
+    { phrases: ["highly recommend", "not bad"], value: 1.5 },
+    { phrases: ["not good", "not recommend", "not great"], value: -1.5 },
+  ];
 
+  multiWordChecks.forEach(({ phrases, value }) => {
+    phrases.forEach((phrase) => {
+      if (reviewText.includes(phrase)) {
+        score += value;
+        if (value > 0) posHits++;
+        else negHits++;
+      }
+    });
+  });
+
+  // Word-by-word analysis
   for (let i = 0; i < words.length; i++) {
     const word = words[i];
     const prevWord = words[i - 1] || "";
 
     if (prevWord === "not") {
-      if (positiveWords.includes(word)) negCount++;
-      else if (negativeWords.includes(word)) posCount++;
+      if (positiveWords.includes(word)) {
+        score -= 1;
+        negHits++;
+      } else if (negativeWords.includes(word)) {
+        score += 1;
+        posHits++;
+      }
     } else {
-      if (positiveWords.includes(word)) posCount++;
-      else if (negativeWords.includes(word)) negCount++;
-      else if (neutralWords.includes(word)) isNeutral = true;
+      if (positiveWords.includes(word)) {
+        score += 1;
+        posHits++;
+      } else if (negativeWords.includes(word)) {
+        score -= 1;
+        negHits++;
+      } else if (neutralWords.includes(word)) {
+        neutralHits++;
+      }
     }
   }
 
   let sentiment = "Neutral";
-  if (posCount > negCount) sentiment = "Positive";
-  else if (negCount > posCount) sentiment = "Negative";
-  else if (posCount === 0 && negCount === 0 && !isNeutral)
-    sentiment = "Neutral";
+  if (score > 0.5) sentiment = "Positive";
+  else if (score < -0.5) sentiment = "Negative";
 
-  const explanation = `Rule-based: Found ${posCount} positive, ${negCount} negative word(s)${
-    isNeutral ? ", and some neutral terms." : "."
-  }`;
+  const explanation = `Rule-based: Score = ${score.toFixed(
+    1
+  )} (Pos: ${posHits}, Neg: ${negHits}, Neutral: ${neutralHits})`;
 
   return { sentiment, explanation };
 }
