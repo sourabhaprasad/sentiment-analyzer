@@ -65,14 +65,6 @@ export default async function ResultPage({
             <span>At: {new Date(result.timestamp).toLocaleString()}</span>
           )}
         </div>
-
-        <div className="mt-6 text-center">
-          <Link href="/all">
-            <button className="text-blue-600 hover:underline text-sm">
-              ← Back to Logs
-            </button>
-          </Link>
-        </div>
       </div>
     </div>
   );
