@@ -21,7 +21,6 @@ export function runRuleBasedAnalysis(review) {
     "favorite",
     "recommend",
     "recommended",
-    "highly recommend",
     "masterpiece",
     "captivating",
     "riveting",
@@ -90,51 +89,57 @@ export function runRuleBasedAnalysis(review) {
   let negHits = 0;
   let neutralHits = 0;
 
-  // Handle multi-word phrases first
-  const multiWordChecks = [
-    { phrases: ["highly recommend", "not bad"], value: 1.5 },
-    { phrases: ["not good", "not recommend", "not great"], value: -1.5 },
+  // Multi-word phrases
+  const phraseMap = [
+    { phrase: "highly recommend", value: 1.5, type: "pos" },
+    { phrase: "not bad", value: 1.0, type: "pos" },
+    { phrase: "not good", value: -1.5, type: "neg" },
+    { phrase: "not recommend", value: -1.5, type: "neg" },
+    { phrase: "not great", value: -1.5, type: "neg" },
+    { phrase: "so-so", value: 0, type: "neutral" },
   ];
 
-  multiWordChecks.forEach(({ phrases, value }) => {
-    phrases.forEach((phrase) => {
-      if (reviewText.includes(phrase)) {
-        score += value;
-        if (value > 0) posHits++;
-        else negHits++;
-      }
-    });
-  });
-
-  // Word-by-word analysis
-  for (let i = 0; i < words.length; i++) {
-    const word = words[i];
-    const prevWord = words[i - 1] || "";
-
-    if (prevWord === "not") {
-      if (positiveWords.includes(word)) {
-        score -= 1;
-        negHits++;
-      } else if (negativeWords.includes(word)) {
-        score += 1;
-        posHits++;
-      }
-    } else {
-      if (positiveWords.includes(word)) {
-        score += 1;
-        posHits++;
-      } else if (negativeWords.includes(word)) {
-        score -= 1;
-        negHits++;
-      } else if (neutralWords.includes(word)) {
-        neutralHits++;
-      }
+  for (const { phrase, value, type } of phraseMap) {
+    if (reviewText.includes(phrase)) {
+      score += value;
+      if (type === "pos") posHits++;
+      else if (type === "neg") negHits++;
+      else if (type === "neutral") neutralHits++;
     }
   }
 
+  // Word-by-word scoring with negation check
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+    const prev1 = words[i - 1] || "";
+    const prev2 = words[i - 2] || "";
+    const isNegated = prev1 === "not" || prev2 === "not";
+
+    if (positiveWords.includes(word)) {
+      if (isNegated) {
+        score -= 1;
+        negHits++;
+      } else {
+        score += 1;
+        posHits++;
+      }
+    } else if (negativeWords.includes(word)) {
+      if (isNegated) {
+        score += 1;
+        posHits++;
+      } else {
+        score -= 1;
+        negHits++;
+      }
+    } else if (neutralWords.includes(word)) {
+      neutralHits++;
+    }
+  }
+
+  // Thresholding
   let sentiment = "Neutral";
-  if (score > 0.5) sentiment = "Positive";
-  else if (score < -0.5) sentiment = "Negative";
+  if (score > 1.0) sentiment = "Positive";
+  else if (score < -1.0) sentiment = "Negative";
 
   const explanation = `Rule-based: Score = ${score.toFixed(
     1
