@@ -1,63 +1,41 @@
-export async function analyzeWithGemini(review) {
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_API_KEY) {
-    console.error("GEMINI_API_KEY is missing.");
-    return null;
-  }
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { z } from "zod";
+import { HumanMessage } from "@langchain/core/messages";
+import dotenv from "dotenv";
+dotenv.config();
 
-  const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+// 1. Define Zod schema
+const schema = z.object({
+  sentiment: z.enum(["Positive", "Negative", "Neutral"]),
+  explanation: z.string().min(1),
+});
+
+// 2. Create Gemini model
+const model = new ChatGoogleGenerativeAI({
+  model: "models/gemini-1.5-flash", // ✅ correct key
+  apiKey: process.env.GOOGLE_API_KEY,
+  temperature: 0.2,
+});
+
+// 3. Bind schema directly to model
+const modelWithStructure = model.withStructuredOutput(schema);
+
+// 4. Function to invoke model with review input
+export async function analyzeWithGemini(review) {
+  const userInput = new HumanMessage(
+    `Analyze the sentiment of this movie review and return a JSON object with "sentiment" and "explanation".
+
+Review: "${review}"`
+  );
 
   try {
-    const res = await fetch(GEMINI_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: `Analyze the sentiment of this movie review and respond in this format:
-
-Sentiment: [Positive|Negative|Neutral]
-Explanation: [one short sentence explaining the reasoning]
-
-Review: "${review}"`,
-              },
-            ],
-          },
-        ],
-      }),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Gemini API returned status ${res.status}`);
-    }
-
-    const data = await res.json();
-    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-
-    if (!raw) {
-      throw new Error("Empty response from Gemini");
-    }
-
-    const sentimentMatch = raw.match(
-      /Sentiment:\s*(Positive|Negative|Neutral)/i
-    );
-    const explanationMatch = raw.match(/Explanation:\s*(.+)/i);
-
-    const sentiment = sentimentMatch?.[1] || null;
-    const explanation = explanationMatch?.[1] || "No explanation provided.";
-
-    if (!sentiment) {
-      throw new Error(`Unexpected sentiment response: "${raw}"`);
-    }
-
-    return { sentiment, explanation };
+    const structuredOutput = await modelWithStructure.invoke([userInput]);
+    return structuredOutput; // Already parsed & validated!
   } catch (err) {
-    console.error("Gemini API error:", err.message);
+    console.error("Structured Gemini error:", err.message);
     return {
       sentiment: "Neutral",
-      explanation: "LLM error or unclear response. Defaulted to Neutral.",
+      explanation: "LLM error or invalid structure. Defaulted to Neutral.",
     };
   }
 }
