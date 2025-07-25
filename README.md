@@ -151,7 +151,3 @@ This structure supports quick scalability with minimal boilerplate.
 - Support multiple languages for international reviews
 - Implement user authentication and history
 - Enhance explanation by highlighting detected keywords
-
----
-
-**Built by [Sourabha K H](mailto:sourabhaprasad04@gmail.com)** — for assignment submission.
